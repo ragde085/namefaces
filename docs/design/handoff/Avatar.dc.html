@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="{{ wrap }}">
+  <sc-if value="{{ showLong }}" hint-placeholder-val="{{ false }}"><div style="{{ longL }}"></div><div style="{{ longR }}"></div></sc-if>
+  <sc-if value="{{ showCap }}" hint-placeholder-val="{{ true }}"><div style="{{ cap }}"></div></sc-if>
+  <div style="{{ head }}"></div>
+  <sc-if value="{{ showBun }}" hint-placeholder-val="{{ false }}"><div style="{{ bun }}"></div></sc-if>
+  <div style="{{ eyeL }}"></div>
+  <div style="{{ eyeR }}"></div>
+  <div style="{{ mouth }}"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:120,&quot;height&quot;:120},&quot;person&quot;:{&quot;editor&quot;:null,&quot;default&quot;:{&quot;hue&quot;:210,&quot;skin&quot;:&quot;#e8b489&quot;,&quot;hair&quot;:&quot;short&quot;,&quot;hairColor&quot;:&quot;#2b2b2b&quot;},&quot;tsType&quot;:&quot;{hue:number;skin:string;hair:string;hairColor:string}&quot;},&quot;size&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:96,&quot;min&quot;:24,&quot;max&quot;:240,&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props.person || {};
+    const size = Number(this.props.size) || 96;
+    const hue = (p.hue != null) ? p.hue : 205;
+    const skin = p.skin || '#e8b489';
+    const hair = p.hair || 'short';
+    const hc = p.hairColor || '#2b2b2b';
+    const abs = { position: 'absolute' };
+    return {
+      wrap: { width: size + 'px', height: size + 'px', borderRadius: (size * 0.3) + 'px', background: 'hsl(' + hue + ' 72% 90%)', position: 'relative', overflow: 'hidden', flex: 'none' },
+      longL: Object.assign({}, abs, { width: '15%', height: '44%', left: '15%', top: '32%', borderRadius: '40%', background: hc }),
+      longR: Object.assign({}, abs, { width: '15%', height: '44%', left: '70%', top: '32%', borderRadius: '40%', background: hc }),
+      cap: Object.assign({}, abs, { width: '68%', height: '46%', left: '16%', top: '13%', borderRadius: '50% 50% 46% 46%', background: hc }),
+      head: Object.assign({}, abs, { width: '58%', height: '58%', left: '21%', top: '30%', borderRadius: '50%', background: skin }),
+      bun: Object.assign({}, abs, { width: '26%', height: '26%', left: '37%', top: '2%', borderRadius: '50%', background: hc }),
+      eyeL: Object.assign({}, abs, { width: '8%', height: '10%', left: '37%', top: '50%', borderRadius: '50%', background: '#33312f' }),
+      eyeR: Object.assign({}, abs, { width: '8%', height: '10%', left: '55%', top: '50%', borderRadius: '50%', background: '#33312f' }),
+      mouth: Object.assign({}, abs, { width: '20%', height: '11%', left: '40%', top: '64%', borderRadius: '0 0 999px 999px', background: '#cf7066' }),
+      showCap: hair !== 'bald',
+      showBun: hair === 'bun',
+      showLong: hair === 'long'
+    };
+  }
+}
+</script>
+</body>
+</html>

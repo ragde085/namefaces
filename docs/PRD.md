@@ -3,16 +3,18 @@
 | Field | Value |
 |---|---|
 | Project | NameFaces Quiz |
-| Doc version | 1.0 |
+| Doc version | 1.1 |
 | Date | 2026-06-18 |
 | Owner | edgar.velazq@gmail.com |
-| Status | Draft — design only (no implementation) |
+| Status | Design ready — aligned to hifi handoff |
 
 ---
 
 ## 1. Overview
 
-NameFaces Quiz is a light-hearted web app that helps office teams learn and remember colleagues' names and roles across the region. Each question pairs an employee headshot and job title with four name options — one correct, three distractors. Players answer one question per page, earn points, and compete on a persistent leaderboard that drives friendly, repeatable engagement.
+NameFaces Quiz is a light-hearted web app that helps **Grid Dynamics México** employees learn and remember colleagues' names, roles, and departments. Each question pairs an employee headshot and job title with four name options — one correct, three distractors. Players answer one question per page, earn points, and compete on a persistent leaderboard that drives friendly, repeatable engagement.
+
+> Design: high-fidelity handoff in [docs/design/](design/) — 5 screens (Login → Dashboard → Quiz → Results → Leaderboard), 3 themes. Gameplay specs below reflect the design; see [PRD_RECONCILIATION.md](design/PRD_RECONCILIATION.md) for deltas.
 
 ## 2. Goals & Non-Goals
 
@@ -63,18 +65,21 @@ Role assignment derives from Google Workspace group membership (see §7).
 ## 6. Functional Requirements
 
 ### 6.1 Dynamic quiz generation
-- Generate randomized sets: 1 photo + 1 role + 4 name options per question.
-- Exactly one correct name; three distractors drawn at random from the active employee pool (no similarity scoring in v1).
+- Pick `quizLength` distinct people; for each, add 3 random distractors from the active pool and shuffle the 4 choices (no similarity scoring in v1).
+- **Two alternating formats** by question index:
+  - **Name round** (even): show headshot → "Who's this?" → 4 name options.
+  - **Face round** (odd): show name + role/dept → 4 headshot tiles.
+- Exactly one correct option per question.
 - No repeated correct-answer employee within a single quiz.
 - Employees without a valid headshot are excluded from quizzes (never the correct answer or a distractor).
-- Quiz length and per-question timing read from admin config.
+- Quiz length (default 8, range 4–12) and per-question timing read from admin config.
 - Each generated quiz records a `quiz version` for history/audit.
 
 ### 6.2 Gameplay & scoring
 - One question per page, immediate feedback (correct / incorrect).
-- Scoring: +10 correct, 0 incorrect.
-- Per-question timer **on by default at 20s** (admin-configurable); timeout = incorrect.
-- End-of-quiz summary: total score, correct count, correct rate.
+- **Time-weighted scoring:** correct = `100 + timeLeft * 10` (faster = more); wrong / timeout = 0.
+- Per-question timer **on by default at 15s** (admin-configurable, range 5–30); timeout = miss ("Time's up!").
+- End-of-quiz summary: total score, correct count, accuracy %.
 
 ### 6.3 Leaderboard & history
 - Global leaderboard: top 10 across the company.
@@ -104,8 +109,9 @@ Role assignment derives from Google Workspace group membership (see §7).
 
 ## 8. Non-Functional Requirements
 
-- **Responsive**: mobile-first layout.
-- **Accessibility**: WCAG AA — color contrast, full keyboard navigation, alt text on headshots, focus states.
+- **Responsive**: desktop-first, collapses to single column under ~720px; hit targets ≥ 44px.
+- **Accessibility**: WCAG 2.1 AA — color contrast, full keyboard navigation, alt text on headshots, focus states.
+- **Theming**: 3 interchangeable themes (`fresh` default / `sunset` / `grape`), oklch tokens; fonts Fredoka + Nunito. See [DESIGN_SPEC.md](design/DESIGN_SPEC.md).
 - **Performance**: quiz question load < 1s on broadband; images optimized/thumbnailed.
 - **Privacy**: headshots + names are PII; access gated by SSO, retired employees excluded from new quizzes.
 - **Auditability**: quiz version + timestamps stored per attempt.
@@ -122,6 +128,17 @@ Role assignment derives from Google Workspace group membership (see §7).
 | Employee data source | HR system import (HRIS CSV/API) |
 | Distractor logic | Same-pool random |
 | Hosting | GCP — Cloud Run + Cloud SQL (Postgres) + GCS |
+| Repo | Single monorepo: `docs/` + `frontend/` + `backend/` |
+
+**Monorepo layout:**
+
+```
+namefaces/
+├── docs/            # PRD, design spec, handoff reference
+│   └── design/      # DESIGN_SPEC, RECONCILIATION, handoff/ (hifi prototype)
+├── frontend/        # React + Vite SPA (recreates hifi screens)
+└── backend/         # Python FastAPI (auth, quiz gen, scores, leaderboard, HR import)
+```
 
 ```mermaid
 graph TD
@@ -201,7 +218,10 @@ flowchart TD
 | Leaderboard window | **Weekly + all-time** boards. |
 | Leaderboard tie-break | **Earliest achieved** — first to reach the score ranks higher. |
 | HR import merge policy | **Admin edits win** — flagged manual edits never overwritten by re-sync. |
-| Per-question timer | **On by default, 20s**, admin-configurable; timeout = incorrect. |
+| Per-question timer | **On by default, 15s**, admin-configurable (5–30); timeout = miss. |
+| Scoring | **Time-weighted:** `100 + timeLeft*10` correct; 0 wrong/timeout. |
+| Quiz formats | **Name round + face round**, alternating by index. |
+| Themes | **fresh** (default) / sunset / grape. |
 | Missing headshot | **Exclude from quizzes** until a valid photo exists. |
 
 ### Remaining for v2
