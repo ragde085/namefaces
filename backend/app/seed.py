@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import unicodedata
+from datetime import datetime, timedelta, timezone
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .models import Employee
+from .models import AttemptAnswer, Employee, QuizAttempt
 
 FIRST = [
     "Sofía", "Mateo", "Valentina", "Diego", "Camila", "Santiago", "Regina", "Emiliano",
@@ -47,3 +50,42 @@ def seed_employees(db: Session) -> int:
         )
     db.commit()
     return len(FIRST)
+
+
+def _ascii(s: str) -> str:
+    return "".join(c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c))
+
+
+def email_for(name: str) -> str:
+    return _ascii(name).lower().replace(" ", ".") + "@griddynamics.com"
+
+
+def seed_attempts(db: Session) -> int:
+    # DEV: synthesize leaderboard history for ~12 colleagues so the board/podium
+    # has content. PRODUCTION: leaderboard is built only from real player attempts.
+    if db.scalar(select(QuizAttempt).limit(1)):
+        return 0
+    emps = db.scalars(select(Employee).limit(12)).all()
+    now = datetime.now(timezone.utc)
+    count = 0
+    for i, e in enumerate(emps):
+        score = 900 - i * 28 + (i % 5) * 13
+        total, correct = 8, max(3, 8 - (i % 4))
+        # Stagger dates: first half within this week, rest older.
+        created = now - timedelta(days=(i % 3) if i < 6 else 9 + i)
+        db.add(
+            QuizAttempt(
+                player_email=email_for(e.name),
+                player_dept=e.dept,
+                score=score,
+                correct=correct,
+                total=total,
+                accuracy=round(correct / total * 100),
+                quiz_version="seed",
+                created_at=created,
+                answers=[AttemptAnswer(employee_id=e.id, correct=True)],
+            )
+        )
+        count += 1
+    db.commit()
+    return count

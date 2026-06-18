@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Logo } from '../components/TopBar'
 import Avatar from '../components/Avatar'
-import { DEPARTMENTS } from '../lib/seed'
-import { buildLeaderboard } from '../lib/leaderboard'
+import { api } from '../lib/api'
+
+// Org departments for filter chips. PRODUCTION: fetch distinct depts from API.
+const DEPARTMENTS = ['Engineering', 'Data', 'Design', 'Product', 'QA', 'DevOps']
 
 function rankBadgeStyle(rank) {
   const fill = rank === 1 ? 'var(--gold)' : rank === 2 ? 'var(--silver)' : rank === 3 ? 'var(--bronze)' : 'var(--bg2)'
@@ -34,10 +36,15 @@ function Podium({ rows }) {
   )
 }
 
-export default function Leaderboard({ user, history, nav }) {
+export default function Leaderboard({ nav }) {
   const [dept, setDept] = useState('All')
-  const rows = buildLeaderboard(user, history, dept)
+  const [window, setWindow] = useState('all_time')
+  const [rows, setRows] = useState([])
   const chips = ['All', ...DEPARTMENTS]
+
+  useEffect(() => {
+    api.leaderboard(window, dept).then((d) => setRows(d.rows)).catch(() => setRows([]))
+  }, [window, dept])
 
   return (
     <div className="nf-fade" style={{ maxWidth: 760, margin: '0 auto', padding: '0 20px 48px' }}>
@@ -46,7 +53,18 @@ export default function Leaderboard({ user, history, nav }) {
         <button onClick={() => nav('dashboard')} style={{ background: 'none', border: 'none', fontWeight: 800, fontSize: 15, color: 'var(--ink-soft)' }}>← Dashboard</button>
       </header>
 
-      <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 32, margin: '0 0 18px' }}>Leaderboard</h1>
+      <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 32, margin: '0 0 14px' }}>Leaderboard</h1>
+
+      {/* Window toggle: all-time vs weekly */}
+      <div style={{ display: 'inline-flex', gap: 4, background: 'var(--bg2)', padding: 4, borderRadius: 999, marginBottom: 14 }}>
+        {[['all_time', 'All-time'], ['weekly', 'This week']].map(([key, label]) => (
+          <button key={key} onClick={() => setWindow(key)} style={{
+            padding: '7px 16px', borderRadius: 999, border: 'none', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 14,
+            background: window === key ? 'var(--surface)' : 'transparent',
+            color: window === key ? 'var(--ink)' : 'var(--ink-soft)',
+          }}>{label}</button>
+        ))}
+      </div>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
         {chips.map((c) => {
@@ -65,17 +83,20 @@ export default function Leaderboard({ user, history, nav }) {
       {rows.length >= 3 && <Podium rows={rows} />}
 
       <div style={{ background: 'var(--surface)', border: '2px solid var(--line)', borderRadius: 22, padding: 10 }}>
+        {rows.length === 0 && (
+          <p style={{ color: 'var(--ink-soft)', textAlign: 'center', padding: '20px 0' }}>No scores in this view yet.</p>
+        )}
         {rows.map((r, i) => (
-          <div key={r.id} style={{
+          <div key={r.player} style={{
             display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px',
             borderBottom: i < rows.length - 1 ? '1.5px solid var(--line)' : 'none',
-            background: r.isYou ? 'var(--bg2)' : 'transparent', borderRadius: r.isYou ? 12 : 0,
+            background: r.is_you ? 'var(--bg2)' : 'transparent', borderRadius: r.is_you ? 12 : 0,
           }}>
             <span style={rankBadgeStyle(r.rank)}>{r.rank}</span>
             <Avatar person={r} size={40} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 800, fontSize: 15 }}>{r.name}</div>
-              <div style={{ color: 'var(--ink-soft)', fontSize: 12 }}>{r.dept} · {r.role}</div>
+              <div style={{ color: 'var(--ink-soft)', fontSize: 12 }}>{r.dept}</div>
             </div>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 17, color: 'var(--primary-dk)' }}>{r.points}</div>
           </div>

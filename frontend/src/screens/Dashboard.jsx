@@ -1,7 +1,8 @@
+import { useEffect, useState } from 'react'
 import TopBar from '../components/TopBar'
 import Avatar from '../components/Avatar'
-import { PEOPLE } from '../lib/seed'
-import { buildLeaderboard, userStats } from '../lib/leaderboard'
+import { api } from '../lib/api'
+import { userStats } from '../lib/leaderboard'
 
 const card = { background: 'var(--surface)', border: '2px solid var(--line)', borderRadius: 20, padding: 18 }
 
@@ -28,9 +29,13 @@ const relDate = (ts) => {
 }
 
 export default function Dashboard({ user, history, config, nav, ...bar }) {
+  const [board, setBoard] = useState([])
+  useEffect(() => {
+    api.leaderboard('all_time', 'All').then((d) => setBoard(d.rows)).catch(() => setBoard([]))
+  }, [])
+
   const stats = userStats(user, history)
-  const board = buildLeaderboard(user, history)
-  const myRank = board.find((r) => r.isYou)?.rank || '—'
+  const myRank = board.find((r) => r.is_you)?.rank || '—'
   const top5 = board.slice(0, 5)
   const recent = history.slice(0, 4)
 
@@ -80,11 +85,14 @@ export default function Dashboard({ user, history, config, nav, ...bar }) {
               <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 18, margin: 0 }}>Top of the office</h3>
               <button onClick={() => nav('leaderboard')} style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 800, fontSize: 14 }}>View all →</button>
             </div>
+            {top5.length === 0 && (
+              <p style={{ color: 'var(--ink-soft)', textAlign: 'center', padding: '16px 0' }}>No scores yet.</p>
+            )}
             {top5.map((r) => (
-              <div key={r.id} style={{
+              <div key={r.player} style={{
                 display: 'flex', alignItems: 'center', gap: 12, padding: '8px 10px', borderRadius: 12, marginBottom: 4,
-                background: r.isYou ? 'var(--bg2)' : 'transparent',
-                border: r.isYou ? '2px solid var(--primary)' : '2px solid transparent',
+                background: r.is_you ? 'var(--bg2)' : 'transparent',
+                border: r.is_you ? '2px solid var(--primary)' : '2px solid transparent',
               }}>
                 <span style={rankBadgeStyle(r.rank)}>{r.rank}</span>
                 <Avatar person={r} size={38} />

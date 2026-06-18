@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import get_settings
 from .db import Base, SessionLocal, engine
 from .routers import auth, employees, leaderboard, quiz
-from .seed import seed_employees
+from .seed import seed_attempts, seed_employees
 
 settings = get_settings()
 
@@ -21,6 +21,7 @@ async def lifespan(app: FastAPI):
         db = SessionLocal()
         try:
             seed_employees(db)
+            seed_attempts(db)
         finally:
             db.close()
     yield

@@ -76,7 +76,10 @@ class AttemptOut(BaseModel):
 
 class LeaderboardRow(BaseModel):
     rank: int
-    player: str
+    player: str  # email
+    name: str
+    first: str
+    hue: int
     dept: str
     points: int
     is_you: bool = False

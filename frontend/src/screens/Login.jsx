@@ -1,12 +1,5 @@
 import { useState } from 'react'
 
-// Derive a display name from the email local part.
-function deriveName(email) {
-  const local = (email.split('@')[0] || '').split(/[._-]/).filter(Boolean)
-  const name = local.map((t) => t[0].toUpperCase() + t.slice(1)).join(' ') || 'Player'
-  return { name, first: name.split(' ')[0], dept: 'Engineering' }
-}
-
 const blob = (color, top, left, size) => ({
   position: 'absolute', top, left, width: size, height: size, borderRadius: '50%',
   background: color, opacity: 0.16, filter: 'blur(20px)', animation: 'nf-float 6s ease-in-out infinite',
@@ -23,10 +16,19 @@ export default function Login({ onLogin }) {
   // PRODUCTION: replace with Google Workspace OIDC.
   const [email, setEmail] = useState('sofia.garcia@griddynamics.com')
   const [password, setPassword] = useState('demo1234')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
-    onLogin(deriveName(email))
+    setBusy(true)
+    setError(null)
+    try {
+      await onLogin(email.trim().toLowerCase())
+    } catch (err) {
+      setError('Could not reach the server. Is the API running?')
+      setBusy(false)
+    }
   }
 
   return (
@@ -72,7 +74,13 @@ export default function Login({ onLogin }) {
             onBlur={(e) => (e.target.style.borderColor = 'var(--line)')} />
         </div>
 
-        <button type="submit" className="btn-3d" style={{ width: '100%' }}>Sign in &amp; play</button>
+        <button type="submit" className="btn-3d" style={{ width: '100%', opacity: busy ? 0.7 : 1 }} disabled={busy}>
+          {busy ? 'Signing in…' : 'Sign in & play'}
+        </button>
+
+        {error && (
+          <p role="alert" style={{ textAlign: 'center', color: 'var(--wrong)', fontSize: 13, margin: '12px 0 0' }}>{error}</p>
+        )}
 
         <p style={{ textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13, margin: '16px 0 0' }}>
           Accounts are created by your admin. Demo credentials pre-filled.

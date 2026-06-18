@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Avatar from '../components/Avatar'
-import { buildQuiz, scoreAnswer, accuracyPct } from '../lib/quiz'
-import { appendEntry } from '../lib/storage'
+import { api } from '../lib/api'
+import { scoreAnswer, accuracyPct } from '../lib/quiz'
 
-export default function Quiz({ config, history, nav, onFinish }) {
-  const questions = useMemo(() => buildQuiz(config.quizLength), [config.quizLength])
+export default function Quiz({ config, nav, onFinish }) {
+  const [quiz, setQuiz] = useState(null) // { questions, timer_seconds, quiz_version }
+  const [loadError, setLoadError] = useState(false)
   const [qIdx, setQIdx] = useState(0)
   const [score, setScore] = useState(0)
   const [correctCount, setCorrectCount] = useState(0)
@@ -12,14 +13,25 @@ export default function Quiz({ config, history, nav, onFinish }) {
   const [revealed, setRevealed] = useState(false)
   const [selected, setSelected] = useState(null)
   const [results, setResults] = useState([])
+  const [submitting, setSubmitting] = useState(false)
   const timerRef = useRef(null)
 
+  // Load quiz from API once.
+  useEffect(() => {
+    api.getQuiz(config.quizLength)
+      .then(setQuiz)
+      .catch(() => setLoadError(true))
+  }, [config.quizLength])
+
+  const questions = quiz?.questions || []
+  const timerSeconds = quiz?.timer_seconds || config.timerSeconds
   const q = questions[qIdx]
   const isLast = qIdx === questions.length - 1
 
-  // Per-question countdown.
+  // Per-question countdown (starts once quiz is loaded).
   useEffect(() => {
-    setTimeLeft(config.timerSeconds)
+    if (!q) return
+    setTimeLeft(timerSeconds)
     setRevealed(false)
     setSelected(null)
     timerRef.current = setInterval(() => {
@@ -34,7 +46,7 @@ export default function Quiz({ config, history, nav, onFinish }) {
     }, 1000)
     return () => clearInterval(timerRef.current)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qIdx])
+  }, [qIdx, quiz])
 
   function reveal(choice) {
     clearInterval(timerRef.current)
@@ -47,28 +59,50 @@ export default function Quiz({ config, history, nav, onFinish }) {
     setResults((r) => [...r, { person: q.person, correct: !!isCorrect }])
   }
 
-  function next() {
-    if (isLast) {
-      const total = questions.length
-      const correct = correctCount
-      const entry = {
-        ts: Date.now(),
+  async function next() {
+    if (!isLast) {
+      setQIdx((i) => i + 1)
+      return
+    }
+    const total = questions.length
+    const correct = correctCount
+    const entry = {
+      score,
+      correct,
+      total,
+      accuracy: accuracyPct(correct, total),
+      version: quiz.quiz_version,
+      results,
+    }
+    setSubmitting(true)
+    try {
+      await api.submitAttempt({
         score,
         correct,
         total,
-        accuracy: accuracyPct(correct, total),
-        version: 'mvp-1',
-        results,
-      }
-      const updated = appendEntry(entry)
-      onFinish(entry, updated)
-    } else {
-      setQIdx((i) => i + 1)
+        quiz_version: quiz.quiz_version,
+        answers: results.map((r) => ({ employee_id: r.person.id, correct: r.correct })),
+      })
+    } catch {
+      /* surfaced via dashboard refresh; keep local entry for results */
     }
+    onFinish(entry)
+  }
+
+  if (loadError) {
+    return (
+      <Centered>
+        <p style={{ color: 'var(--wrong)' }}>Couldn't load the quiz. Is the API running?</p>
+        <button className="btn-3d" onClick={() => nav('dashboard')}>Back to dashboard</button>
+      </Centered>
+    )
+  }
+  if (!q) {
+    return <Centered><p style={{ color: 'var(--ink-soft)' }}>Loading quiz…</p></Centered>
   }
 
   const timerColor = timeLeft <= 5 ? 'var(--wrong)' : 'var(--primary)'
-  const deg = (timeLeft / config.timerSeconds) * 360
+  const deg = (timeLeft / timerSeconds) * 360
   const progress = (qIdx + (revealed ? 1 : 0)) / questions.length
 
   return (
@@ -110,8 +144,16 @@ export default function Quiz({ config, history, nav, onFinish }) {
           <FaceRound q={q} revealed={revealed} selected={selected} onPick={reveal} />
         )}
 
-        {revealed && <FeedbackBanner q={q} selected={selected} isLast={isLast} onNext={next} />}
+        {revealed && <FeedbackBanner q={q} selected={selected} isLast={isLast} onNext={next} submitting={submitting} />}
       </div>
+    </div>
+  )
+}
+
+function Centered({ children }) {
+  return (
+    <div style={{ minHeight: '100%', display: 'grid', placeItems: 'center', gap: 16, padding: 20 }}>
+      {children}
     </div>
   )
 }
@@ -181,7 +223,7 @@ function FaceRound({ q, revealed, selected, onPick }) {
   )
 }
 
-function FeedbackBanner({ q, selected, isLast, onNext }) {
+function FeedbackBanner({ q, selected, isLast, onNext, submitting }) {
   const correct = selected && selected.id === q.person.id
   const timeout = !selected
   const title = correct ? 'Correct! 🎉' : timeout ? "Time's up!" : 'Not quite'
@@ -196,8 +238,8 @@ function FeedbackBanner({ q, selected, isLast, onNext }) {
         <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 20, color }}>{title}</div>
         <div style={{ fontSize: 14, color: 'var(--ink-soft)' }}>{q.person.name} · {q.person.role}, {q.person.dept}</div>
       </div>
-      <button className="btn-3d" style={{ fontSize: 16, padding: '12px 18px', whiteSpace: 'nowrap' }} onClick={onNext}>
-        {isLast ? 'See results →' : 'Next →'}
+      <button className="btn-3d" style={{ fontSize: 16, padding: '12px 18px', whiteSpace: 'nowrap', opacity: submitting ? 0.7 : 1 }} onClick={onNext} disabled={submitting}>
+        {isLast ? (submitting ? 'Saving…' : 'See results →') : 'Next →'}
       </button>
     </div>
   )

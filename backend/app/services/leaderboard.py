@@ -40,13 +40,28 @@ def build_leaderboard(
 
     rows: List[LeaderboardRow] = []
     for i, r in enumerate(records):
+        name, first = _display_name(r.player_email)
         rows.append(
             LeaderboardRow(
                 rank=i + 1,
                 player=r.player_email,
+                name=name,
+                first=first,
+                hue=_hue(r.player_email),
                 dept=r.dept or "",
                 points=int(r.points or 0),
                 is_you=(me is not None and r.player_email == me),
             )
         )
     return LeaderboardOut(window=window, dept_filter=dept, rows=rows)
+
+
+def _display_name(email: str) -> tuple[str, str]:
+    local = email.split("@")[0]
+    tokens = [t for t in local.replace(".", " ").replace("_", " ").replace("-", " ").split() if t]
+    name = " ".join(t.capitalize() for t in tokens) or "Player"
+    return name, name.split(" ")[0]
+
+
+def _hue(email: str) -> int:
+    return sum(ord(c) for c in email) % 360
