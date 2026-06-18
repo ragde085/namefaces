@@ -1,0 +1,64 @@
+@import "./tokens.css";
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font-family: inherit; cursor: pointer; }
+
+/* ---- Signature 3D button ---- */
+.btn-3d {
+  border: none;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 19px;
+  padding: 15px;
+  border-radius: 15px;
+  box-shadow: 0 5px 0 var(--primary-dk);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.btn-3d:hover { transform: translateY(-2px); }
+.btn-3d:active { transform: translateY(3px); box-shadow: 0 3px 0 var(--primary-dk); }
+
+/* ---- Keyframes ---- */
+@keyframes nf-pop {
+  0% { transform: scale(0.82); opacity: 0; }
+  60% { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes nf-fade {
+  0% { transform: translateY(12px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+@keyframes nf-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+@keyframes nf-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-16px); }
+}
+
+.nf-pop { animation: nf-pop 0.45s ease both; }
+.nf-fade { animation: nf-fade 0.35s ease both; }
+.nf-shake { animation: nf-shake 0.4s ease both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nf-pop, .nf-fade, .nf-shake { animation: none; }
+}
+
+/* Collapse 2-col grids to single column on small screens. */
+@media (max-width: 720px) {
+  .dash-grid { grid-template-columns: 1fr !important; }
+}
