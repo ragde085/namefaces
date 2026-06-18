@@ -2,13 +2,51 @@
 
 Python FastAPI. Serves auth, quiz generation, scoring, leaderboard, and HR roster import.
 
-## Scope
-- **Auth:** Google Workspace OIDC; Admin/Player roles from Workspace groups.
-- **Quiz:** generate questions (same-pool random distractors, name/face rounds); time-weighted scoring (`100 + timeLeft*10`).
-- **Data:** PostgreSQL (employees, attempts, history, leaderboard) + GCS for headshots.
-- **Leaderboard:** weekly + all-time, tie-break earliest achieved, dept filter.
-- **HR import:** HRIS sync (CSV/API), idempotent upsert, admin-edits-win merge.
+## Run (dev)
+
+```bash
+cd backend
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env          # dev defaults to SQLite, seeds demo employees
+uvicorn app.main:app --reload --port 8000
+```
+
+- API docs: http://localhost:8000/docs
+- Health: http://localhost:8000/health
+
+## Layout
+
+```
+app/
+├── main.py          # app, CORS, router wiring, startup (create_all + seed)
+├── config.py        # settings (.env)
+├── db.py            # engine/session/Base (SQLite dev, Postgres prod)
+├── models.py        # Employee, QuizAttempt, AttemptAnswer
+├── schemas.py       # Pydantic I/O
+├── auth.py          # DEV header stub → TODO Google OIDC + group roles
+├── seed.py          # demo employees (dev)
+├── services/        # quiz (gen + scoring), leaderboard (weekly/all-time)
+└── routers/         # auth, quiz, employees (admin), leaderboard
+```
+
+## Endpoints
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/auth/me` | current user (Player/Admin) |
+| GET | `/quiz?length=` | generate quiz (name/face rounds) |
+| POST | `/attempts` | submit a finished quiz |
+| GET | `/history` | player's past attempts |
+| GET | `/leaderboard?window=&dept=` | weekly / all_time, dept filter |
+| GET | `/employees` | admin: roster |
+| PATCH | `/employees/{id}` | admin: edit (sets admin_locked) |
+| POST | `/employees/import` | admin: HRIS upsert (admin-edits-win) |
+
+## Production TODO
+- Replace dev auth stub with Google Workspace OIDC verification + group-based roles.
+- Alembic migrations instead of `create_all`.
+- Postgres (Cloud SQL) + GCS for headshots; `photo_url` = GCS object URL.
+- Scoring (`100 + timeLeft*10`) computed/validated server-side, not trusted from client.
 
 See [../docs/PRD.md](../docs/PRD.md) for full requirements.
-
-> Not scaffolded yet — design + reqs only.

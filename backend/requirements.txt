@@ -1,0 +1,7 @@
+fastapi>=0.115,<0.116
+uvicorn[standard]>=0.32,<0.33
+SQLAlchemy>=2.0,<2.1
+pydantic>=2.9,<3
+pydantic-settings>=2.6,<3
+# Production Postgres driver (dev defaults to SQLite, no driver needed):
+psycopg[binary]>=3.2,<4
