@@ -39,9 +39,12 @@ app/
 | POST | `/attempts` | submit a finished quiz |
 | GET | `/history` | player's past attempts |
 | GET | `/leaderboard?window=&dept=` | weekly / all_time, dept filter |
-| GET | `/employees` | admin: roster |
-| PATCH | `/employees/{id}` | admin: edit (sets admin_locked) |
+| GET | `/employees` | admin: roster (dept/status filters) |
+| POST | `/employees` | admin: create (sets admin_locked) |
+| PATCH | `/employees/{id}` | admin: edit / retire (sets admin_locked) |
 | POST | `/employees/import` | admin: HRIS upsert (admin-edits-win) |
+| GET | `/config` | quiz params (length, timer) |
+| PATCH | `/config` | admin: update quiz params (persisted) |
 
 ## Production TODO
 - Replace dev auth stub with Google Workspace OIDC verification + group-based roles.

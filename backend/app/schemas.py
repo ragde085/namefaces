@@ -21,12 +21,50 @@ class PersonOut(BaseModel):
     hair_color: str
 
 
+class EmployeeAdminOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    name: str
+    first: str
+    role: str
+    dept: str
+    photo_url: Optional[str] = None
+    status: str
+    admin_locked: bool
+    quizzable: bool
+    hue: int
+    skin: str
+    hair: str
+    hair_color: str
+
+
+class EmployeeCreate(BaseModel):
+    id: str
+    name: str
+    role: str = ""
+    dept: str = ""
+    photo_url: Optional[str] = None
+
+
 class EmployeeUpdate(BaseModel):
     name: Optional[str] = None
     role: Optional[str] = None
     dept: Optional[str] = None
     photo_url: Optional[str] = None
     status: Optional[str] = None
+
+
+class ConfigOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    quiz_length: int
+    timer_seconds: int
+
+
+class ConfigUpdate(BaseModel):
+    quiz_length: Optional[int] = None
+    timer_seconds: Optional[int] = None
 
 
 class EmployeeImportRow(BaseModel):

@@ -5,6 +5,7 @@ import Dashboard from './screens/Dashboard'
 import Quiz from './screens/Quiz'
 import Results from './screens/Results'
 import Leaderboard from './screens/Leaderboard'
+import Admin from './screens/Admin'
 
 export default function App() {
   const [screen, setScreen] = useState('login')
@@ -26,11 +27,20 @@ export default function App() {
     }
   }, [])
 
+  const refreshConfig = useCallback(async () => {
+    try {
+      const c = await api.getConfig()
+      setConfig({ quizLength: c.quiz_length, timerSeconds: c.timer_seconds })
+    } catch {
+      /* keep defaults */
+    }
+  }, [])
+
   const onLogin = async (email) => {
     setUserEmail(email)
     const me = await api.me()
     setUser(me)
-    await refreshHistory()
+    await Promise.all([refreshHistory(), refreshConfig()])
     setScreen('dashboard')
   }
 
@@ -41,7 +51,7 @@ export default function App() {
   }
 
   const nav = (s) => setScreen(s)
-  const props = { theme, setTheme, user, history, config, setConfig, nav }
+  const props = { theme, setTheme, user, history, config, setConfig, nav, refreshConfig }
 
   switch (screen) {
     case 'login':
@@ -54,6 +64,8 @@ export default function App() {
       return <Results {...props} lastEntry={lastEntry} />
     case 'leaderboard':
       return <Leaderboard {...props} />
+    case 'admin':
+      return <Admin {...props} />
     default:
       return null
   }

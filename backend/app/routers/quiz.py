@@ -10,6 +10,7 @@ from ..config import Settings, get_settings
 from ..db import get_db
 from ..models import AttemptAnswer, QuizAttempt
 from ..schemas import AttemptIn, AttemptOut, QuizOut, UserOut
+from ..services.appconfig import get_config
 from ..services.quiz import accuracy_pct, build_quiz
 
 router = APIRouter(tags=["quiz"])
@@ -19,10 +20,11 @@ router = APIRouter(tags=["quiz"])
 def generate_quiz(
     length: Optional[int] = None,
     db: Session = Depends(get_db),
-    settings: Settings = Depends(get_settings),
+    _settings: Settings = Depends(get_settings),
     _user: UserOut = Depends(get_current_user),
 ) -> QuizOut:
-    return build_quiz(db, length or settings.quiz_length, settings.timer_seconds)
+    cfg = get_config(db)
+    return build_quiz(db, length or cfg.quiz_length, cfg.timer_seconds)
 
 
 @router.post("/attempts", response_model=AttemptOut, status_code=201)

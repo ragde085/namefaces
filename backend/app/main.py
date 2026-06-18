@@ -7,8 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
 from .db import Base, SessionLocal, engine
-from .routers import auth, employees, leaderboard, quiz
+from .routers import auth, config as config_router, employees, leaderboard, quiz
 from .seed import seed_attempts, seed_employees
+from .services.appconfig import get_config
 
 settings = get_settings()
 
@@ -20,6 +21,7 @@ async def lifespan(app: FastAPI):
     if settings.seed_on_startup:
         db = SessionLocal()
         try:
+            get_config(db)  # ensure config row exists
             seed_employees(db)
             seed_attempts(db)
         finally:
@@ -41,6 +43,7 @@ app.include_router(auth.router)
 app.include_router(quiz.router)
 app.include_router(employees.router)
 app.include_router(leaderboard.router)
+app.include_router(config_router.router)
 
 
 @app.get("/health", tags=["meta"])

@@ -48,6 +48,14 @@ export default function TopBar({ user, theme, setTheme, nav, maxWidth = 1080, sh
             ))}
           </div>
         )}
+        {user?.is_admin && (
+          <button
+            onClick={() => nav('admin')}
+            style={{ background: 'none', border: 'none', fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 15, color: 'var(--ink-soft)' }}
+          >
+            Admin
+          </button>
+        )}
         <button
           onClick={() => nav('leaderboard')}
           style={{ background: 'none', border: 'none', fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: 15, color: 'var(--ink-soft)' }}

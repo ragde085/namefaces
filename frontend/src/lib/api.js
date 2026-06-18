@@ -38,4 +38,17 @@ export const api = {
   history: () => req('/history').then((rows) => rows.map(normHistory)),
   leaderboard: (window = 'all_time', dept = 'All') =>
     req(`/leaderboard?window=${window}&dept=${encodeURIComponent(dept)}`),
+
+  // Config
+  getConfig: () => req('/config'),
+  updateConfig: (body) => req('/config', { method: 'PATCH', body: JSON.stringify(body) }),
+
+  // Admin: roster
+  listEmployees: (dept = 'All', status = 'All') =>
+    req(`/employees?dept=${encodeURIComponent(dept)}&status=${status}`),
+  createEmployee: (body) => req('/employees', { method: 'POST', body: JSON.stringify(body) }),
+  updateEmployee: (id, body) =>
+    req(`/employees/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  importEmployees: (rows) =>
+    req('/employees/import', { method: 'POST', body: JSON.stringify(rows) }),
 }

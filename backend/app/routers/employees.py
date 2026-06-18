@@ -9,15 +9,21 @@ from sqlalchemy.orm import Session
 from ..auth import require_admin
 from ..db import get_db
 from ..models import Employee
-from ..schemas import EmployeeImportRow, EmployeeUpdate, PersonOut, UserOut
+from ..schemas import (
+    EmployeeAdminOut,
+    EmployeeCreate,
+    EmployeeImportRow,
+    EmployeeUpdate,
+    UserOut,
+)
 
 router = APIRouter(prefix="/employees", tags=["employees"])
 
 
-@router.get("", response_model=List[PersonOut])
+@router.get("", response_model=List[EmployeeAdminOut])
 def list_employees(
     dept: str = "All",
-    status: str = "active",
+    status: str = "All",
     db: Session = Depends(get_db),
     _admin: UserOut = Depends(require_admin),
 ) -> List[Employee]:
@@ -26,10 +32,33 @@ def list_employees(
         q = q.where(Employee.status == status)
     if dept != "All":
         q = q.where(Employee.dept == dept)
-    return list(db.scalars(q).all())
+    return list(db.scalars(q.order_by(Employee.name)).all())
 
 
-@router.patch("/{employee_id}", response_model=PersonOut)
+@router.post("", response_model=EmployeeAdminOut, status_code=201)
+def create_employee(
+    payload: EmployeeCreate,
+    db: Session = Depends(get_db),
+    _admin: UserOut = Depends(require_admin),
+) -> Employee:
+    if db.get(Employee, payload.id):
+        raise HTTPException(status_code=409, detail="Employee id already exists")
+    emp = Employee(
+        id=payload.id,
+        name=payload.name,
+        first=payload.name.split(" ")[0],
+        role=payload.role,
+        dept=payload.dept,
+        photo_url=payload.photo_url,
+        admin_locked=True,  # manually created -> protect from re-sync
+    )
+    db.add(emp)
+    db.commit()
+    db.refresh(emp)
+    return emp
+
+
+@router.patch("/{employee_id}", response_model=EmployeeAdminOut)
 def edit_employee(
     employee_id: str,
     payload: EmployeeUpdate,

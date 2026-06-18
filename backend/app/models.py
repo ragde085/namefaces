@@ -38,6 +38,15 @@ class Employee(Base):
         return self.status == "active" and bool(self.photo_url)
 
 
+class AppConfig(Base):
+    __tablename__ = "app_config"
+
+    # Single-row config (id=1). Admin-configurable quiz parameters.
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
+    quiz_length: Mapped[int] = mapped_column(Integer, default=8)
+    timer_seconds: Mapped[int] = mapped_column(Integer, default=15)
+
+
 class QuizAttempt(Base):
     __tablename__ = "quiz_attempts"
 
