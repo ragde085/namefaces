@@ -171,7 +171,8 @@ function NameRound({ q, revealed, selected, onPick }) {
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
         <div className="nf-pop"><Avatar person={q.person} size={148} /></div>
       </div>
-      <h2 style={{ textAlign: 'center', fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 24, margin: '0 0 18px' }}>Who's this?</h2>
+      <h2 style={{ textAlign: 'center', fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 24, margin: '0 0 4px' }}>Who's this?</h2>
+      <p style={{ textAlign: 'center', color: 'var(--ink-soft)', fontSize: 14, margin: '0 0 18px' }}>{q.person.role} · {q.person.dept}</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {q.choices.map((c) => {
           const st = optState(c, q, selected, revealed)
