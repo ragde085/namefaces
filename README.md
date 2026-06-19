@@ -12,6 +12,8 @@ backend/   # Python FastAPI
 
 ## Docs
 - [PRD](docs/PRD.md) — product requirements
+- [Architecture](docs/ARCHITECTURE.md) — as-built design, data model, flow diagrams
+- [Deployment](docs/DEPLOYMENT.md) — local run + GCP topology
 - [Design Spec](docs/design/DESIGN_SPEC.md) — extracted from hifi handoff
 - [PRD ↔ Design Reconciliation](docs/design/PRD_RECONCILIATION.md)
 - [Handoff prototype](docs/design/handoff/) — reference HTML (not production code)
