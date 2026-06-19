@@ -36,7 +36,7 @@ function Podium({ rows }) {
   )
 }
 
-export default function Leaderboard({ nav }) {
+export default function Leaderboard({ nav, onLogout }) {
   const [dept, setDept] = useState('All')
   const [window, setWindow] = useState('all_time')
   const [rows, setRows] = useState([])
@@ -50,7 +50,15 @@ export default function Leaderboard({ nav }) {
     <div className="nf-fade" style={{ maxWidth: 760, margin: '0 auto', padding: '0 20px 48px' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 0' }}>
         <Logo size={38} onClick={() => nav('dashboard')} />
-        <button onClick={() => nav('dashboard')} style={{ background: 'none', border: 'none', fontWeight: 800, fontSize: 15, color: 'var(--ink-soft)' }}>← Dashboard</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <button onClick={() => nav('dashboard')} style={{ background: 'none', border: 'none', fontWeight: 800, fontSize: 15, color: 'var(--ink-soft)' }}>← Dashboard</button>
+          {onLogout && (
+            <button onClick={onLogout} title="Log out" aria-label="Log out" style={{
+              background: 'var(--surface)', border: '2px solid var(--line)', borderRadius: 999,
+              width: 34, height: 34, display: 'grid', placeItems: 'center', color: 'var(--ink-soft)', fontSize: 15,
+            }}>⏻</button>
+          )}
+        </div>
       </header>
 
       <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 32, margin: '0 0 14px' }}>Leaderboard</h1>

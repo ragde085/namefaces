@@ -22,7 +22,7 @@ function Logo({ size = 38, label = true, onClick }) {
   )
 }
 
-export default function TopBar({ user, theme, setTheme, nav, maxWidth = 1080, showThemes = true }) {
+export default function TopBar({ user, theme, setTheme, nav, onLogout, maxWidth = 1080, showThemes = true }) {
   return (
     <header style={{
       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -73,6 +73,17 @@ export default function TopBar({ user, theme, setTheme, nav, maxWidth = 1080, sh
             }}>{user.first?.[0] || '?'}</span>
             <span style={{ fontWeight: 800, fontSize: 14 }}>{user.first}</span>
           </div>
+        )}
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            title="Log out"
+            aria-label="Log out"
+            style={{
+              background: 'var(--surface)', border: '2px solid var(--line)', borderRadius: 999,
+              width: 34, height: 34, display: 'grid', placeItems: 'center', color: 'var(--ink-soft)', fontSize: 15,
+            }}
+          >⏻</button>
         )}
       </div>
     </header>

@@ -50,8 +50,16 @@ export default function App() {
     setScreen('results')
   }
 
+  const onLogout = () => {
+    setUserEmail(null)
+    setUser(null)
+    setHistory([])
+    setLastEntry(null)
+    setScreen('login')
+  }
+
   const nav = (s) => setScreen(s)
-  const props = { theme, setTheme, user, history, config, setConfig, nav, refreshConfig }
+  const props = { theme, setTheme, user, history, config, setConfig, nav, refreshConfig, onLogout }
 
   switch (screen) {
     case 'login':
